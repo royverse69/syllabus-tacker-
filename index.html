@@ -7,6 +7,293 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --primary-color: #bb86fc;
+            --primary-variant-color: #3700b3;
+            --secondary-color: #03dac6;
+            --on-surface-color: #e0e0e0;
+            --on-surface-medium-emphasis: rgba(255, 255, 255, 0.6);
+            --completed-color: #4caf50;
+            --weak-color: #ffc107;
+            --error-color: #cf6679;
+            --border-color: rgba(255, 255, 255, 0.12);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--on-surface-color);
+            line-height: 1.6;
+        }
+        .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 1rem 1rem 6rem 1rem; }
+
+        /* --- VIEWS & PAGES --- */
+        .view { display: none; }
+        .view.active { display: block; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- LOADER --- */
+        .loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .spinner { border: 4px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top: 4px solid var(--primary-color); width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- AUTH VIEW --- */
+        #auth-view { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem; }
+        .auth-container { max-width: 400px; width: 100%; padding: 2.5rem; background-color: var(--surface-color); border-radius: 12px; border: 1px solid var(--border-color); }
+        .auth-form { display: none; } /* Hide all forms by default */
+        .auth-form.active { display: block; animation: fadeIn 0.3s ease-in-out; } /* Show active form */
+        .auth-form h2 { text-align: center; margin-bottom: 2rem; color: var(--primary-color); }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; color: var(--on-surface-medium-emphasis); }
+        .form-group input { width: 100%; padding: 0.8rem; background-color: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--on-surface-color); font-size: 1rem; }
+        .auth-btn { width: 100%; padding: 0.8rem; background-color: var(--primary-color); color: var(--bg-color); border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: background-color 0.3s; }
+        .auth-btn:hover { background-color: #a050f8; }
+        .auth-switch, .forgot-password-link { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; }
+        .auth-switch a, .forgot-password-link a { color: var(--secondary-color); text-decoration: none; cursor: pointer; }
+        .auth-message { padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; text-align: center; display: none; }
+        .auth-message.error { color: var(--error-color); background-color: rgba(207, 102, 121, 0.1); }
+        .auth-message.success { color: var(--secondary-color); background-color: rgba(3, 218, 198, 0.1); }
+
+        /* --- APP VIEW --- */
+        .main-header { text-align: center; margin-bottom: 2rem; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
+        .main-header h1 { font-size: 2.5rem; font-weight: 700; color: var(--primary-color); letter-spacing: 1px; }
+
+        .deadlines, .subjects { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+        .deadlines { margin-bottom: 3rem; }
+        .deadline-card, .subject-card { background-color: var(--surface-color); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .deadline-card:hover, .subject-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+        .deadline-card { text-align: center; }
+        .subject-card { text-align: center; cursor: pointer; padding: 2rem; }
+        .deadline-card h2 { font-size: 1.2rem; margin-bottom: 1rem; color: var(--secondary-color); font-weight: 600; }
+        .countdown { font-size: 1.5rem; font-weight: 300; letter-spacing: 1px; }
+        .countdown span { font-weight: 700; color: var(--on-surface-color); }
+        .subject-card h3 { font-size: 1.8rem; margin-bottom: 0.5rem; font-weight: 600; }
+
+        /* Subject Detail View */
+        .subject-view { background-color: var(--surface-color); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color); }
+        .subject-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); }
+        .subject-header h2 { font-size: 2rem; color: var(--primary-color); }
+        .back-btn { background: none; border: none; color: var(--secondary-color); font-size: 1.5rem; cursor: pointer; }
+        .progress-section { margin-bottom: 2rem; }
+        .progress-stats { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--on-surface-medium-emphasis); }
+        .progress-bar-container { width: 100%; height: 12px; background-color: #333; border-radius: 6px; overflow: hidden; }
+        .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary-variant-color), var(--primary-color)); border-radius: 6px; transition: width 0.5s ease-in-out; }
+        .chapter-list { list-style: none; }
+        .chapter-item { background-color: #2c2c2c; margin-bottom: 1rem; padding: 1rem 1.5rem; border-radius: 8px; border-left: 5px solid var(--on-surface-medium-emphasis); transition: all 0.3s ease; }
+        .chapter-item.completed { background-color: rgba(76, 175, 80, 0.1); border-left-color: var(--completed-color); }
+        .chapter-item.weak { border-left-color: var(--weak-color); }
+        .chapter-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .chapter-title { font-size: 1.1rem; font-weight: 600; }
+        .chapter-item.completed .chapter-title { text-decoration: line-through; color: var(--on-surface-medium-emphasis); }
+        .weak-btn { background: none; border: 1px solid var(--weak-color); color: var(--weak-color); padding: 0.3rem 0.6rem; border-radius: 5px; cursor: pointer; font-size: 0.8rem; transition: background-color 0.3s, color 0.3s; }
+        .weak-btn:hover, .chapter-item.weak .weak-btn { background-color: var(--weak-color); color: var(--bg-color); }
+        .chapter-details { max-height: 0; overflow: hidden; transition: max-height 0.5s ease; }
+        .chapter-details.open { max-height: 200px; }
+        .tasks { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; flex-wrap: wrap; gap: 1rem; }
+        .task-item { display: flex; align-items: center; gap: 0.5rem; }
+        .task-item label { font-size: 0.9rem; color: var(--on-surface-medium-emphasis); }
+        .task-item input[type="checkbox"] { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; border: 2px solid var(--secondary-color); border-radius: 4px; cursor: pointer; position: relative; transition: background-color 0.2s, border-color 0.2s; }
+        .task-item input[type="checkbox"]:checked { background-color: var(--secondary-color); border-color: var(--secondary-color); }
+        .task-item input[type="checkbox"]:checked::before { content: '✔'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; color: var(--bg-color); }
+
+        /* --- PROFILE PAGE --- */
+        #profile-page .profile-card { background-color: var(--surface-color); padding: 2rem; border-radius: 12px; text-align: center; }
+        #profile-page h2 { margin-bottom: 1rem; color: var(--primary-color); }
+        #profile-page #user-email { color: var(--on-surface-medium-emphasis); margin-bottom: 2rem; word-break: break-all; }
+        #profile-page .logout-btn { background-color: var(--error-color); color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background-color 0.3s; width: 100%; }
+        #profile-page .logout-btn:hover { background-color: #b04356; }
+        
+        /* --- BOTTOM NAVIGATION --- */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--surface-color);
+            display: flex;
+            justify-content: space-around;
+            border-top: 1px solid var(--border-color);
+            padding: 0.5rem 0;
+            z-index: 100;
+        }
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--on-surface-medium-emphasis);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: color 0.3s;
+            font-size: 0.75rem;
+        }
+        .nav-btn svg {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 4px;
+        }
+        .nav-btn.active {
+            color: var(--primary-color);
+        }
+
+        /* --- RESPONSIVENESS --- */
+        @media (max-width: 768px) {
+            .main-header h1 { font-size: 2rem; }
+            .subject-header h2 { font-size: 1.5rem; }
+            .tasks { flex-direction: column; align-items: flex-start; }
+            .container { padding: 1rem 1rem 7rem 1rem; }
+        }
+        @media (min-width: 769px) {
+            .bottom-nav {
+                left: 0;
+                top: 0;
+                bottom: 0;
+                right: auto;
+                width: 80px;
+                flex-direction: column;
+                justify-content: flex-start;
+                padding-top: 2rem;
+                gap: 1.5rem;
+                border-top: none;
+                border-right: 1px solid var(--border-color);
+            }
+            .container {
+                padding: 1rem 1rem 1rem 100px; /* 80px nav + 20px padding */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader" class="loader" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- AUTHENTICATION VIEW -->
+    <div id="auth-view" class="view">
+        <div class="auth-container">
+            <div id="auth-message-container"></div>
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form active">
+                <h2>Login</h2>
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" name="password" required>
+                </div>
+                <button type="submit" class="auth-btn">Login</button>
+                <p class="forgot-password-link"><a id="show-forgot-password">Forgot Password?</a></p>
+                <p class="auth-switch">Don't have an account? <a id="show-signup">Sign Up</a></p>
+            </form>
+            <!-- Signup Form -->
+            <form id="signup-form" class="auth-form">
+                <h2>Sign Up</h2>
+                <div class="form-group">
+                    <label for="signup-email">Email</label>
+                    <input type="email" id="signup-email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Password</label>
+                    <input type="password" id="signup-password" name="password" required>
+                </div>
+                <button type="submit" class="auth-btn">Sign Up</button>
+                <p class="auth-switch">Already have an account? <a id="show-login">Login</a></p>
+            </form>
+            <!-- Forgot Password Form -->
+            <form id="forgot-password-form" class="auth-form">
+                <h2>Reset Password</h2>
+                <p style="text-align: center; margin-bottom: 1rem; font-size: 0.9rem; color: var(--on-surface-medium-emphasis);">Enter your email to receive a reset link.</p>
+                <div class="form-group">
+                    <label for="forgot-email">Email</label>
+                    <input type="email" id="forgot-email" name="email" required>
+                </div>
+                <button type="submit" class="auth-btn">Send Reset Link</button>
+                <p class="auth-switch"><a id="back-to-login">Back to Login</a></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP VIEW -->
+    <div id="app-view" class="view">
+        <div class="container">
+            <!-- Dashboard Page -->
+            <div id="dashboard-page" class="page">
+                <header class="main-header">
+                    <h1>Dashboard</h1>
+                </header>
+                <section class="deadlines">
+                    <div class="deadline-card">
+                        <h2>Master Deadline</h2>
+                        <div id="master-countdown" class="countdown">Loading...</div>
+                    </div>
+                    <div class="deadline-card">
+                        <h2>Syllabus Completion</h2>
+                        <div id="syllabus-countdown" class="countdown">Loading...</div>
+                    </div>
+                </section>
+                <section class="subjects">
+                    <div class="subject-card" data-subject="physics"><h3>Physics</h3></div>
+                    <div class="subject-card" data-subject="chemistry"><h3>Chemistry</h3></div>
+                    <div class="subject-card" data-subject="math"><h3>Mathematics</h3></div>
+                </section>
+            </div>
+            <!-- Subject Detail Page (dynamically populated) -->
+            <div id="subject-detail-page" class="page">
+                 <div class="subject-view">
+                    <header class="subject-header">
+                        <button class="back-btn" id="back-to-dashboard-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                        </button>
+                        <h2 id="subject-title"></h2>
+                    </header>
+                    <section class="progress-section">
+                        <div class="progress-stats">
+                            <span id="progress-text">Progress: 0%</span>
+                            <span id="chapter-count">Chapters: 0/0</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div id="progress-bar" class="progress-bar"></div>
+                        </div>
+                    </section>
+                    <ul id="chapter-list" class="chapter-list"></ul>
+                </div>
+            </div>
+            <!-- Profile Page -->
+            <div id="profile-page" class="page">
+                <header class="main-header">
+                    <h1>Profile</h1>
+                </header>
+                <div class="profile-card">
+                    <h2>User Information</h2>
+                    <p id="user-email">Loading...</p>
+                    <button class="logout-btn">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM NAVIGATION -->
+        <nav class="bottom-nav">
+            <button class="nav-btn active" data-page="dashboard-page">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <span>Dashboard</span>
+            </button>
+            <button class="nav-btn" data-page="profile-page">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>Profile</span>
+            </button>
+        </nav>
+    </div>
+
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -16,8 +303,7 @@
             createUserWithEmailAndPassword, 
             signInWithEmailAndPassword, 
             signOut,
-            GoogleAuthProvider,
-            signInWithPopup
+            sendPasswordResetEmail
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { 
             getFirestore, 
@@ -27,111 +313,163 @@
             onSnapshot
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- Firebase Configuration ---
-        // This is your specific project configuration.
         const firebaseConfig = {
-          // *** IMPORTANT: PASTE YOUR NEWLY REGENERATED API KEY HERE ***
-          apiKey: "AIzaSyD9In71uHgnU2s93aW6IxpgVdGQQ_4g6Uk", 
-          authDomain: "syllabus-tracker-3b6a3.firebaseapp.com",
-          projectId: "syllabus-tracker-3b6a3",
-          storageBucket: "syllabus-tracker-3b6a3.appspot.com",
-          messagingSenderId: "38480750240",
-          appId: "1:38480750240:web:20482783722e1360624bc5"
+            apiKey: "PASTE_YOUR_VALID_API_KEY_HERE",
+            authDomain: "syllabus-tracker-3b6a3.firebaseapp.com",
+            projectId: "syllabus-tracker-3b6a3",
+            storageBucket: "syllabus-tracker-3b6a3.appspot.com",
+            messagingSenderId: "38480750240",
+            appId: "1:38480750240:web:20482783722e1360624bc5"
         };
         
-        // --- Initialize Firebase ---
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const googleProvider = new GoogleAuthProvider();
 
-        // We use the appId from the config for the database path
-        const appId = firebaseConfig.appId;
-
-        // --- Global State ---
         let state = {};
-        let unsubscribeFromFirestore = null; // To detach the listener on logout
+        let unsubscribeFromFirestore = null;
 
-        // --- DATA STRUCTURE ---
         const syllabusData = {
-            physics: [
-                "Units, Dimensions & Errors", "Vectors", "Electrostatics", "Current Electricity",
-                "Magnetic Effects of Current", "Magnetism and Matter", "Electromagnetic Induction",
-                "AC-DC", "Electromagnetic Waves", "Ray Optics", "Wave Optics", "Semiconductor",
-                "Atoms and Nuclei", "Dual Nature of Matter", "Thermodynamics", "Kinetic Theory of Gases",
-                "Fluid Mechanics", "Gravitation", "Circular Motion", "Work, Power, Energy",
-                "Laws of Motion", "Kinematics 1D", "Kinematics 2D", "SHM"
-            ],
-            chemistry: [
-                "Some Basic Principles of Chemistry (Organic)", "Mole Concept (Physical)", "Atomic Structure (Physical)",
-                "IUPAC Nomenclature (Organic)", "Isomerism (Organic)", "Periodic Table (Inorganic)",
-                "Redox Reactions (Physical)", "Chemical Bonding (Inorganic)", "Hydrocarbons (Organic)",
-                "Halogens (Organic)", "Alcohol, Phenol, Ether (Organic)", "Organic Compounds with N/O (Organic)",
-                "Biomolecules (Organic)", "Thermodynamics (Physical)", "Solutions (Physical)",
-                "Chemical Kinetics (Physical)", "Electrochemistry (Physical)", "P-block Elements (Inorganic)",
-                "D and F Block Elements (Inorganic)", "Coordination Compounds (Inorganic)"
-            ],
-            math: [
-                "Logarithm", "Sets", "Complex Numbers", "Quadratic Equations", "Matrices", "Determinants",
-                "Permutations & Combination", "Binomial Theorem", "Sequence and Series", "Trigonometry Phase-1",
-                "Trigonometry Phase-2", "Inverse Trigonometry", "Limits", "Continuity and Differentiability",
-                "Differential Calculus", "Integral Calculus", "Coordinate Geometry", "3D Geometry",
-                "Vectors", "Circles", "Straight Line", "Conic Section", "Relation and Functions",
-                "Probability & Statistics", "Statics"
-            ]
+            physics: ["Units, Dimensions & Errors", "Vectors", "Electrostatics", "Current Electricity", "Magnetic Effects of Current", "Magnetism and Matter", "Electromagnetic Induction", "AC-DC", "Electromagnetic Waves", "Ray Optics", "Wave Optics", "Semiconductor", "Atoms and Nuclei", "Dual Nature of Matter", "Thermodynamics", "Kinetic Theory of Gases", "Fluid Mechanics", "Gravitation", "Circular Motion", "Work, Power, Energy", "Laws of Motion", "Kinematics 1D", "Kinematics 2D", "SHM"],
+            chemistry: ["Some Basic Principles of Chemistry (Organic)", "Mole Concept (Physical)", "Atomic Structure (Physical)", "IUPAC Nomenclature (Organic)", "Isomerism (Organic)", "Periodic Table (Inorganic)", "Redox Reactions (Physical)", "Chemical Bonding (Inorganic)", "Hydrocarbons (Organic)", "Halogens (Organic)", "Alcohol, Phenol, Ether (Organic)", "Organic Compounds with N/O (Organic)", "Biomolecules (Organic)", "Thermodynamics (Physical)", "Solutions (Physical)", "Chemical Kinetics (Physical)", "Electrochemistry (Physical)", "P-block Elements (Inorganic)", "D and F Block Elements (Inorganic)", "Coordination Compounds (Inorganic)"],
+            math: ["Logarithm", "Sets", "Complex Numbers", "Quadratic Equations", "Matrices", "Determinants", "Permutations & Combination", "Binomial Theorem", "Sequence and Series", "Trigonometry Phase-1", "Trigonometry Phase-2", "Inverse Trigonometry", "Limits", "Continuity and Differentiability", "Differential Calculus", "Integral Calculus", "Coordinate Geometry", "3D Geometry", "Vectors", "Circles", "Straight Line", "Conic Section", "Relation and Functions", "Probability & Statistics", "Statics"]
         };
 
-        // --- DOM ELEMENTS ---
+        // --- DOM Elements ---
+        const loader = document.getElementById('loader');
         const authView = document.getElementById('auth-view');
         const appView = document.getElementById('app-view');
-        const dashboardView = document.getElementById('dashboard');
-        const subjectView = document.getElementById('subject-view');
-        const loader = document.getElementById('loader');
-
+        // Auth Forms
         const loginForm = document.getElementById('login-form');
         const signupForm = document.getElementById('signup-form');
+        const forgotPasswordForm = document.getElementById('forgot-password-form');
+        // Auth Links
         const showSignupLink = document.getElementById('show-signup');
         const showLoginLink = document.getElementById('show-login');
-        const logoutBtn = document.getElementById('logout-btn');
-        const googleSignInBtn = document.getElementById('google-signin-btn');
-
+        const showForgotPasswordLink = document.getElementById('show-forgot-password');
+        const backToLoginLink = document.getElementById('back-to-login');
+        // Auth Messages
+        const authMessageContainer = document.getElementById('auth-message-container');
+        // App Pages
+        const pages = document.querySelectorAll('.page');
+        const subjectDetailPage = document.getElementById('subject-detail-page');
+        // Nav
+        const navButtons = document.querySelectorAll('.nav-btn');
+        const backToDashboardBtn = document.getElementById('back-to-dashboard-btn');
+        // Profile
+        const userEmailEl = document.getElementById('user-email');
+        const logoutBtn = document.querySelector('.logout-btn');
+        // Subject Detail
         const subjectCards = document.querySelectorAll('.subject-card');
-        const backBtn = document.querySelector('.back-btn');
         const subjectTitle = document.getElementById('subject-title');
         const chapterList = document.getElementById('chapter-list');
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
         const chapterCount = document.getElementById('chapter-count');
-        const authError = document.getElementById('auth-error');
 
-        // --- AUTHENTICATION LOGIC ---
+        // --- Core App Logic ---
+        const showView = (viewId) => {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+        };
+
+        const showPage = (pageId) => {
+            pages.forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            // Update nav button active state
+            navButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.page === pageId);
+            });
+        };
+
+        const showLoader = (show) => {
+            loader.style.display = show ? 'flex' : 'none';
+        };
+
+        // --- Authentication ---
         onAuthStateChanged(auth, user => {
-            showLoader(false);
             if (user) {
-                authView.style.display = 'none';
-                appView.style.display = 'block';
-                loadDataFromFirestore(user.uid);
+                loadUserSession(user);
             } else {
-                if (unsubscribeFromFirestore) {
-                    unsubscribeFromFirestore();
-                }
+                if (unsubscribeFromFirestore) unsubscribeFromFirestore();
                 state = {};
-                appView.style.display = 'none';
-                authView.style.display = 'block';
+                showView('auth-view');
+                showAuthForm('login-form'); // Default to login form on logout
+                showLoader(false);
             }
         });
+
+        async function loadUserSession(user) {
+            showLoader(true);
+            userEmailEl.textContent = user.email;
+            const docRef = doc(db, "users", user.uid);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists() && docSnap.data().syllabus) {
+                state = docSnap.data().syllabus;
+            } else {
+                await initializeFirestoreData(user.uid);
+            }
+            
+            attachRealtimeListener(user.uid);
+            showView('app-view');
+            showPage('dashboard-page');
+            showLoader(false);
+        }
+
+        async function initializeFirestoreData(userId) {
+            const initialData = {};
+            for (const subject in syllabusData) {
+                initialData[subject] = syllabusData[subject].map(name => ({ name, tasks: { module: false, pyq: false, revision: false }, isComplete: false, isWeak: false }));
+            }
+            state = initialData;
+            const docRef = doc(db, "users", userId);
+            await setDoc(docRef, { syllabus: initialData });
+        }
+
+        function attachRealtimeListener(userId) {
+            if (unsubscribeFromFirestore) unsubscribeFromFirestore();
+            const docRef = doc(db, "users", userId);
+            unsubscribeFromFirestore = onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    state = docSnap.data().syllabus;
+                    // If subject detail view is active, refresh it
+                    const currentSubject = subjectTitle.dataset.currentSubject;
+                    if (subjectDetailPage.classList.contains('active') && currentSubject) {
+                        renderSubject(currentSubject);
+                    }
+                }
+            });
+        }
+
+        const showAuthMessage = (message, type = 'error') => {
+            authMessageContainer.innerHTML = `<div class="auth-message ${type}">${message}</div>`;
+            authMessageContainer.querySelector('.auth-message').style.display = 'block';
+        };
+
+        const clearAuthMessages = () => {
+            authMessageContainer.innerHTML = '';
+        };
+
+        const showAuthForm = (formId) => {
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+            document.getElementById(formId).classList.add('active');
+            clearAuthMessages();
+        }
+
+        showSignupLink.addEventListener('click', () => showAuthForm('signup-form'));
+        showLoginLink.addEventListener('click', () => showAuthForm('login-form'));
+        showForgotPasswordLink.addEventListener('click', () => showAuthForm('forgot-password-form'));
+        backToLoginLink.addEventListener('click', () => showAuthForm('login-form'));
 
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             showLoader(true);
-            authError.style.display = 'none';
-            const email = loginForm.email.value;
-            const password = loginForm.password.value;
+            clearAuthMessages();
             try {
-                await signInWithEmailAndPassword(auth, email, password);
+                await signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value);
             } catch (error) {
-                authError.textContent = error.message;
-                authError.style.display = 'block';
+                showAuthMessage(error.message);
                 showLoader(false);
             }
         });
@@ -139,174 +477,53 @@
         signupForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             showLoader(true);
-            authError.style.display = 'none';
-            const email = signupForm.email.value;
-            const password = signupForm.password.value;
+            clearAuthMessages();
             try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                await initializeFirestoreData(userCredential.user.uid);
+                const userCredential = await createUserWithEmailAndPassword(auth, signupForm.email.value, signupForm.password.value);
+                // The onAuthStateChanged listener will handle the rest
             } catch (error) {
-                authError.textContent = error.message;
-                authError.style.display = 'block';
+                showAuthMessage(error.message);
                 showLoader(false);
             }
         });
 
-        googleSignInBtn.addEventListener('click', async () => {
+        forgotPasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
             showLoader(true);
-            authError.style.display = 'none';
+            clearAuthMessages();
             try {
-                const result = await signInWithPopup(auth, googleProvider);
-                const user = result.user;
-                // Check if user is new, if so, initialize their data
-                const docRef = getSyllabusDocRef(user.uid);
-                const docSnap = await getDoc(docRef);
-                if (!docSnap.exists()) {
-                    await initializeFirestoreData(user.uid);
-                }
+                await sendPasswordResetEmail(auth, forgotPasswordForm.email.value);
+                showAuthMessage('Password reset email sent! Check your inbox.', 'success');
             } catch (error) {
-                authError.textContent = error.message;
-                authError.style.display = 'block';
-                showLoader(false);
+                showAuthMessage(error.message);
             }
+            showLoader(false);
         });
 
-        logoutBtn.addEventListener('click', async () => {
-            await signOut(auth);
-            showDashboardView();
-        });
-        
-        showSignupLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            loginForm.style.display = 'none';
-            signupForm.style.display = 'block';
-            authError.style.display = 'none';
+        logoutBtn.addEventListener('click', () => signOut(auth));
+
+        // --- Navigation ---
+        navButtons.forEach(btn => {
+            btn.addEventListener('click', () => showPage(btn.dataset.page));
         });
 
-        showLoginLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            signupForm.style.display = 'none';
-            loginForm.style.display = 'block';
-            authError.style.display = 'none';
-        });
-
-        // --- FIRESTORE LOGIC ---
-        function getSyllabusDocRef(userId) {
-            // Using a simpler path for user data
-            return doc(db, "users", userId);
-        }
-
-        async function initializeFirestoreData(userId) {
-            const initialData = {};
-            for (const subject in syllabusData) {
-                initialData[subject] = syllabusData[subject].map(chapterName => ({
-                    name: chapterName,
-                    tasks: { module: false, pyq: false, revision: false },
-                    isComplete: false,
-                    isWeak: false
-                }));
-            }
-            const docRef = getSyllabusDocRef(userId);
-            await setDoc(docRef, { syllabus: initialData });
-        }
-
-        function loadDataFromFirestore(userId) {
-            showLoader(true);
-            const docRef = getSyllabusDocRef(userId);
-            
-            if (unsubscribeFromFirestore) {
-                unsubscribeFromFirestore();
-            }
-
-            unsubscribeFromFirestore = onSnapshot(docRef, (docSnap) => {
-                if (docSnap.exists() && docSnap.data().syllabus) {
-                    state = docSnap.data().syllabus;
-                    const currentSubject = subjectTitle.dataset.currentSubject;
-                    if (appView.style.display === 'block' && subjectView.style.display === 'block' && currentSubject) {
-                        renderSubject(currentSubject);
-                    }
-                } else {
-                    console.log("No data found for user, initializing...");
-                    initializeFirestoreData(userId);
-                }
-                showLoader(false);
-            }, (error) => {
-                console.error("Error fetching data from Firestore:", error);
-                alert("Could not load your data. Please try again later.");
-                showLoader(false);
+        subjectCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const subject = card.dataset.subject;
+                renderSubject(subject);
+                showPage('subject-detail-page');
             });
-        }
+        });
         
-        async function updateFirestore() {
-            if (!auth.currentUser) return;
-            const docRef = getSyllabusDocRef(auth.currentUser.uid);
-            try {
-                await setDoc(docRef, { syllabus: state }, { merge: true });
-            } catch (error) {
-                console.error("Error updating Firestore: ", error);
-                alert("There was an error saving your progress. Please check your connection.");
-            }
-        }
+        backToDashboardBtn.addEventListener('click', () => showPage('dashboard-page'));
 
-        // --- UI & RENDERING LOGIC ---
-        function showLoader(show) {
-            loader.style.display = show ? 'flex' : 'none';
-        }
-
-        function startCountdowns() {
-            const masterDeadline = new Date('2026-01-15T00:00:00');
-            const syllabusDeadline = new Date();
-            syllabusDeadline.setDate(syllabusDeadline.getDate() + 95);
-
-            const masterCountdownEl = document.getElementById('master-countdown');
-            const syllabusCountdownEl = document.getElementById('syllabus-countdown');
-
-            function updateCountdown() {
-                const now = new Date();
-                const masterDiff = masterDeadline - now;
-                if (masterDiff > 0) {
-                    const days = Math.floor(masterDiff / (1000 * 60 * 60 * 24));
-                    const hours = Math.floor((masterDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    const minutes = Math.floor((masterDiff % (1000 * 60 * 60)) / (1000 * 60));
-                    masterCountdownEl.innerHTML = `<span>${days}</span>d <span>${hours}</span>h <span>${minutes}</span>m`;
-                } else {
-                    masterCountdownEl.innerHTML = "Deadline Reached!";
-                }
-
-                const syllabusDiff = syllabusDeadline - now;
-                 if (syllabusDiff > 0) {
-                    const days = Math.floor(syllabusDiff / (1000 * 60 * 60 * 24));
-                    const hours = Math.floor((syllabusDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    syllabusCountdownEl.innerHTML = `<span>${days}</span> days <span>${hours}</span> hours`;
-                } else {
-                    syllabusCountdownEl.innerHTML = "Deadline Reached!";
-                }
-            }
-            updateCountdown();
-            setInterval(updateCountdown, 60000);
-        }
-
-        function showDashboardView() {
-            subjectView.style.display = 'none';
-            dashboardView.style.display = 'block';
-            subjectTitle.dataset.currentSubject = '';
-        }
-
-        function showSubjectView(subject) {
-            dashboardView.style.display = 'none';
-            subjectView.style.display = 'block';
-            renderSubject(subject);
-        }
-
+        // --- Subject Logic & Rendering ---
         function renderSubject(subject) {
             subjectTitle.textContent = subject.charAt(0).toUpperCase() + subject.slice(1);
             subjectTitle.dataset.currentSubject = subject;
             chapterList.innerHTML = '';
 
-            if (!state || !state[subject]) {
-                console.warn(`No state found for subject: ${subject}`);
-                return;
-            }
+            if (!state || !state[subject]) return;
             
             const subjectChapters = state[subject];
             subjectChapters.forEach((chapter, index) => {
@@ -357,252 +574,68 @@
             chapterCount.textContent = `Chapters: ${completedChapters}/${totalChapters}`;
         }
 
-        // --- EVENT HANDLING ---
         function addEventListenersToChapters(subject) {
-            const items = chapterList.querySelectorAll('.chapter-item');
-            items.forEach(item => {
-                const header = item.querySelector('.chapter-header');
-                header.addEventListener('click', (e) => {
+            chapterList.querySelectorAll('.chapter-item').forEach(item => {
+                const index = item.dataset.index;
+                item.querySelector('.chapter-header').addEventListener('click', (e) => {
                     if (e.target.classList.contains('weak-btn')) return;
-                    const details = item.querySelector('.chapter-details');
-                    details.classList.toggle('open');
+                    item.querySelector('.chapter-details').classList.toggle('open');
                 });
 
-                const checkboxes = item.querySelectorAll('input[type="checkbox"]');
-                checkboxes.forEach(checkbox => {
+                item.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
                     checkbox.addEventListener('change', () => {
-                        const index = item.dataset.index;
-                        const task = checkbox.dataset.task;
-                        state[subject][index].tasks[task] = checkbox.checked;
+                        state[subject][index].tasks[checkbox.dataset.task] = checkbox.checked;
                         state[subject][index].isComplete = Object.values(state[subject][index].tasks).every(Boolean);
-                        
-                        item.classList.toggle('completed', state[subject][index].isComplete);
-                        
-                        updateProgress(subject);
                         updateFirestore();
                     });
                 });
                 
-                const weakBtn = item.querySelector('.weak-btn');
-                weakBtn.addEventListener('click', () => {
-                    const index = item.dataset.index;
+                item.querySelector('.weak-btn').addEventListener('click', () => {
                     state[subject][index].isWeak = !state[subject][index].isWeak;
-                    item.classList.toggle('weak', state[subject][index].isWeak);
                     updateFirestore();
                 });
             });
         }
         
-        // --- INITIALIZATION ---
+        async function updateFirestore() {
+            if (!auth.currentUser) return;
+            const docRef = doc(db, "users", auth.currentUser.uid);
+            await setDoc(docRef, { syllabus: state }, { merge: true });
+        }
+
+        // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', () => {
-            showLoader(true); // Show loader on initial load
-            subjectCards.forEach(card => {
-                card.addEventListener('click', () => {
-                    const subject = card.dataset.subject;
-                    showSubjectView(subject);
-                });
-            });
-
-            backBtn.addEventListener('click', () => {
-                showDashboardView();
-            });
-
-            // Initial form display setup
-            signupForm.style.display = 'none';
-            loginForm.style.display = 'block';
-
+            showLoader(true);
             startCountdowns();
         });
 
+        function startCountdowns() {
+            const masterDeadline = new Date('2026-01-15T00:00:00');
+            const syllabusDeadline = new Date();
+            syllabusDeadline.setDate(syllabusDeadline.getDate() + 95);
+
+            const masterCountdownEl = document.getElementById('master-countdown');
+            const syllabusCountdownEl = document.getElementById('syllabus-countdown');
+
+            function updateCountdown() {
+                const now = new Date();
+                const masterDiff = masterDeadline - now;
+                if (masterDiff > 0) {
+                    const days = Math.floor(masterDiff / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((masterDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    masterCountdownEl.innerHTML = `<span>${days}</span>d <span>${hours}</span>h`;
+                } else { masterCountdownEl.innerHTML = "Deadline Reached!"; }
+
+                const syllabusDiff = syllabusDeadline - now;
+                 if (syllabusDiff > 0) {
+                    const days = Math.floor(syllabusDiff / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((syllabusDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    syllabusCountdownEl.innerHTML = `<span>${days}</span>d <span>${hours}</span>h`;
+                } else { syllabusCountdownEl.innerHTML = "Deadline Reached!"; }
+            }
+            updateCountdown();
+            setInterval(updateCountdown, 60000);
+        }
     </script>
-    <style>
-        :root {
-            --bg-color: #121212;
-            --surface-color: #1e1e1e;
-            --primary-color: #bb86fc;
-            --primary-variant-color: #3700b3;
-            --secondary-color: #03dac6;
-            --on-surface-color: #e0e0e0;
-            --on-surface-medium-emphasis: rgba(255, 255, 255, 0.6);
-            --completed-color: #4caf50;
-            --weak-color: #ffc107;
-            --error-color: #cf6679;
-            --border-color: rgba(255, 255, 255, 0.12);
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--on-surface-color);
-            line-height: 1.6;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            padding: 1rem;
-        }
-        .container { width: 100%; max-width: 1200px; margin: 0 auto; }
-
-        .loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .spinner { border: 4px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top: 4px solid var(--primary-color); width: 50px; height: 50px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        #auth-view { max-width: 400px; margin: 5rem auto; padding: 2.5rem; background-color: var(--surface-color); border-radius: 12px; border: 1px solid var(--border-color); }
-        .auth-form h2 { text-align: center; margin-bottom: 2rem; color: var(--primary-color); }
-        .form-group { margin-bottom: 1.5rem; }
-        .form-group label { display: block; margin-bottom: 0.5rem; color: var(--on-surface-medium-emphasis); }
-        .form-group input { width: 100%; padding: 0.8rem; background-color: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--on-surface-color); font-size: 1rem; }
-        .auth-btn { width: 100%; padding: 0.8rem; background-color: var(--primary-color); color: var(--bg-color); border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: background-color 0.3s; }
-        .auth-btn:hover { background-color: #a050f8; }
-        
-        .divider { display: flex; align-items: center; text-align: center; color: var(--on-surface-medium-emphasis); margin: 1.5rem 0; }
-        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border-color); }
-        .divider:not(:empty)::before { margin-right: .25em; }
-        .divider:not(:empty)::after { margin-left: .25em; }
-
-        .google-btn { width: 100%; padding: 0.8rem; background-color: #fff; color: #333; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background-color 0.3s; display: flex; justify-content: center; align-items: center; gap: 0.75rem; }
-        .google-btn:hover { background-color: #f2f2f2; }
-        .google-btn svg { width: 18px; height: 18px; }
-
-        .auth-switch { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; }
-        .auth-switch a { color: var(--secondary-color); text-decoration: none; }
-        #auth-error { color: var(--error-color); background-color: rgba(207, 102, 121, 0.1); padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; text-align: center; display: none; }
-
-        .main-header { display: flex; justify-content: space-between; align-items: center; text-align: center; margin-bottom: 2rem; padding: 1rem; border-bottom: 1px solid var(--border-color); }
-        .main-header h1 { font-size: 2.5rem; font-weight: 700; color: var(--primary-color); letter-spacing: 1px; }
-        #logout-btn { background-color: var(--error-color); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background-color 0.3s; }
-        #logout-btn:hover { background-color: #b04356; }
-        .deadlines, .subjects { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
-        .deadlines { margin-bottom: 3rem; }
-        .deadline-card, .subject-card { background-color: var(--surface-color); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.3s ease, box-shadow 0.3s ease; }
-        .deadline-card:hover, .subject-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
-        .deadline-card { text-align: center; }
-        .subject-card { text-align: center; cursor: pointer; padding: 2rem; }
-        .deadline-card h2 { font-size: 1.2rem; margin-bottom: 1rem; color: var(--secondary-color); font-weight: 600; }
-        .countdown { font-size: 1.5rem; font-weight: 300; letter-spacing: 1px; }
-        .countdown span { font-weight: 700; color: var(--on-surface-color); }
-        .subject-card h3 { font-size: 1.8rem; margin-bottom: 0.5rem; font-weight: 600; }
-        .subject-view { display: none; background-color: var(--surface-color); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color); }
-        .subject-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); }
-        .subject-header h2 { font-size: 2rem; color: var(--primary-color); }
-        .back-btn { background-color: var(--secondary-color); color: var(--bg-color); border: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background-color 0.3s; }
-        .back-btn:hover { background-color: #05fbe8; }
-        .progress-section { margin-bottom: 2rem; }
-        .progress-stats { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--on-surface-medium-emphasis); }
-        .progress-bar-container { width: 100%; height: 12px; background-color: #333; border-radius: 6px; overflow: hidden; }
-        .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary-variant-color), var(--primary-color)); border-radius: 6px; transition: width 0.5s ease-in-out; }
-        .chapter-list { list-style: none; }
-        .chapter-item { background-color: #2c2c2c; margin-bottom: 1rem; padding: 1rem 1.5rem; border-radius: 8px; border-left: 5px solid var(--on-surface-medium-emphasis); transition: all 0.3s ease; }
-        .chapter-item.completed { background-color: rgba(76, 175, 80, 0.1); border-left-color: var(--completed-color); }
-        .chapter-item.weak { border-left-color: var(--weak-color); }
-        .chapter-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .chapter-title { font-size: 1.1rem; font-weight: 600; }
-        .chapter-item.completed .chapter-title { text-decoration: line-through; color: var(--on-surface-medium-emphasis); }
-        .weak-btn { background: none; border: 1px solid var(--weak-color); color: var(--weak-color); padding: 0.3rem 0.6rem; border-radius: 5px; cursor: pointer; font-size: 0.8rem; transition: background-color 0.3s, color 0.3s; }
-        .weak-btn:hover, .chapter-item.weak .weak-btn { background-color: var(--weak-color); color: var(--bg-color); }
-        .chapter-details { max-height: 0; overflow: hidden; transition: max-height 0.5s ease; }
-        .chapter-details.open { max-height: 200px; }
-        .tasks { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; flex-wrap: wrap; gap: 1rem; }
-        .task-item { display: flex; align-items: center; gap: 0.5rem; }
-        .task-item label { font-size: 0.9rem; color: var(--on-surface-medium-emphasis); }
-        .task-item input[type="checkbox"] { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; border: 2px solid var(--secondary-color); border-radius: 4px; cursor: pointer; position: relative; transition: background-color 0.2s, border-color 0.2s; }
-        .task-item input[type="checkbox"]:checked { background-color: var(--secondary-color); border-color: var(--secondary-color); }
-        .task-item input[type="checkbox"]:checked::before { content: '✔'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; color: var(--bg-color); }
-        @media (max-width: 768px) { body { padding: 0.5rem; } .main-header h1 { font-size: 2rem; } .subject-header h2 { font-size: 1.5rem; } .tasks { flex-direction: column; align-items: flex-start; } }
-    </style>
-</head>
-<body>
-
-    <div id="loader" class="loader" style="display: none;">
-        <div class="spinner"></div>
-    </div>
-
-    <div class="container">
-        <!-- Authentication View -->
-        <div id="auth-view" style="display: none;">
-            <form id="login-form" class="auth-form">
-                <h2>Login</h2>
-                <div id="auth-error"></div>
-                <div class="form-group">
-                    <label for="login-email">Email</label>
-                    <input type="email" id="login-email" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="login-password">Password</label>
-                    <input type="password" id="login-password" name="password" required>
-                </div>
-                <button type="submit" class="auth-btn">Login</button>
-                <div class="divider">OR</div>
-                <button type="button" id="google-signin-btn" class="google-btn">
-                    <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.222,0-9.658-3.317-11.28-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C44.438,36.338,48,30.418,48,24c0-1.94-0.222-3.83-0.636-5.638L43.611,20.083z"></path></svg>
-                    Sign in with Google
-                </button>
-                <p class="auth-switch">Don't have an account? <a href="#" id="show-signup">Sign Up</a></p>
-            </form>
-
-            <form id="signup-form" class="auth-form" style="display: none;">
-                 <h2>Sign Up</h2>
-                 <div class="form-group">
-                     <label for="signup-email">Email</label>
-                     <input type="email" id="signup-email" name="email" required>
-                 </div>
-                 <div class="form-group">
-                     <label for="signup-password">Password</label>
-                     <input type="password" id="signup-password" name="password" required>
-                 </div>
-                 <button type="submit" class="auth-btn">Sign Up</button>
-                 <p class="auth-switch">Already have an account? <a href="#" id="show-login">Login</a></p>
-            </form>
-        </div>
-
-        <!-- Main App View (shown after login) -->
-        <div id="app-view" style="display: none;">
-            <!-- Main Dashboard View -->
-            <div id="dashboard">
-                <header class="main-header">
-                    <h1>Syllabus Tracker</h1>
-                    <button id="logout-btn">Logout</button>
-                </header>
-
-                <section class="deadlines">
-                    <div class="deadline-card">
-                        <h2>Master Deadline</h2>
-                        <div id="master-countdown" class="countdown">Loading...</div>
-                    </div>
-                    <div class="deadline-card">
-                        <h2>Syllabus Completion</h2>
-                        <div id="syllabus-countdown" class="countdown">Loading...</div>
-                    </div>
-                </section>
-
-                <section class="subjects">
-                    <div class="subject-card" data-subject="physics"><h3>Physics</h3></div>
-                    <div class="subject-card" data-subject="chemistry"><h3>Chemistry</h3></div>
-                    <div class="subject-card" data-subject="math"><h3>Mathematics</h3></div>
-                </section>
-            </div>
-
-            <!-- Subject Detail View -->
-            <div id="subject-view" class="subject-view">
-                <header class="subject-header">
-                    <h2 id="subject-title"></h2>
-                    <button class="back-btn">Back to Dashboard</button>
-                </header>
-
-                <section class="progress-section">
-                    <div class="progress-stats">
-                        <span id="progress-text">Progress: 0%</span>
-                        <span id="chapter-count">Chapters: 0/0</span>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div id="progress-bar" class="progress-bar"></div>
-                    </div>
-                </section>
-
-                <ul id="chapter-list" class="chapter-list"></ul>
-            </div>
-        </div>
-    </div>
-
 </body>
 </html>
