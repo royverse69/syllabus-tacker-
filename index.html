@@ -32,8 +32,8 @@
         .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 1rem 1rem 6rem 1rem; }
 
         /* --- VIEWS & PAGES --- */
-        .view { display: none; }
-        .view.active { display: block; }
+        .view { display: none; } /* All views are hidden by default */
+        .view.active { display: block; } /* Only the active view is shown */
         .page { display: none; }
         .page.active { display: block; animation: fadeIn 0.5s ease; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -179,7 +179,7 @@
 </head>
 <body>
 
-    <div id="loader" class="loader" style="display: none;">
+    <div id="loader" class="loader">
         <div class="spinner"></div>
     </div>
 
@@ -188,7 +188,7 @@
         <div class="auth-container">
             <div id="auth-message-container"></div>
             <!-- Login Form -->
-            <form id="login-form" class="auth-form active">
+            <form id="login-form" class="auth-form">
                 <h2>Login</h2>
                 <div class="form-group">
                     <label for="login-email">Email</label>
@@ -633,8 +633,7 @@
 
         // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', () => {
-            showLoader(true);
-            startCountdowns();
+            // The onAuthStateChanged listener will handle showing the initial view
         });
 
         function startCountdowns() {
@@ -664,6 +663,7 @@
             updateCountdown();
             setInterval(updateCountdown, 60000);
         }
+        startCountdowns();
     </script>
 </body>
 </ht
