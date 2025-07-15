@@ -16,8 +16,6 @@
             createUserWithEmailAndPassword, 
             signInWithEmailAndPassword, 
             signOut,
-            signInAnonymously,
-            signInWithCustomToken,
             GoogleAuthProvider,
             signInWithPopup
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -30,16 +28,24 @@
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Firebase Configuration ---
-        // These will be populated by the environment
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
+        // This is your specific project configuration.
+        const firebaseConfig = {
+          apiKey: "AIzaSyD9In71uHgnU2s93aW6xpgVdGQQ_4g6UK",
+          authDomain: "syllabus-tracker-3b6a3.firebaseapp.com",
+          projectId: "syllabus-tracker-3b6a3",
+          storageBucket: "syllabus-tracker-3b6a3.appspot.com",
+          messagingSenderId: "38480750240",
+          appId: "1:38480750240:web:20482783722e1360624bc5"
+        };
+        
         // --- Initialize Firebase ---
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const googleProvider = new GoogleAuthProvider();
+
+        // We use the appId from the config for the database path
+        const appId = firebaseConfig.appId;
 
         // --- Global State ---
         let state = {};
@@ -101,35 +107,18 @@
         onAuthStateChanged(auth, user => {
             showLoader(false);
             if (user) {
-                // User is signed in
                 authView.style.display = 'none';
                 appView.style.display = 'block';
                 loadDataFromFirestore(user.uid);
             } else {
-                // User is signed out
                 if (unsubscribeFromFirestore) {
-                    unsubscribeFromFirestore(); // Detach old listener
+                    unsubscribeFromFirestore();
                 }
-                state = {}; // Clear local state
+                state = {};
                 appView.style.display = 'none';
                 authView.style.display = 'block';
             }
         });
-
-        async function handleInitialAuth() {
-            showLoader(true);
-            try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                }
-                // If no token, onAuthStateChanged will handle showing the login page.
-            } catch (error) {
-                console.error("Error with custom token sign-in:", error);
-                authError.textContent = "Session token is invalid. Please log in manually.";
-                authError.style.display = 'block';
-                showLoader(false);
-            }
-        }
 
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -154,7 +143,6 @@
             const password = signupForm.password.value;
             try {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                // Create initial data for the new user
                 await initializeFirestoreData(userCredential.user.uid);
             } catch (error) {
                 authError.textContent = error.message;
@@ -167,8 +155,14 @@
             showLoader(true);
             authError.style.display = 'none';
             try {
-                await signInWithPopup(auth, googleProvider);
-                // onAuthStateChanged will handle the rest, including checking/creating user data
+                const result = await signInWithPopup(auth, googleProvider);
+                const user = result.user;
+                // Check if user is new, if so, initialize their data
+                const docRef = getSyllabusDocRef(user.uid);
+                const docSnap = await getDoc(docRef);
+                if (!docSnap.exists()) {
+                    await initializeFirestoreData(user.uid);
+                }
             } catch (error) {
                 authError.textContent = error.message;
                 authError.style.display = 'block';
@@ -178,15 +172,13 @@
 
         logoutBtn.addEventListener('click', async () => {
             await signOut(auth);
-            showDashboardView(); // Reset view to dashboard before logging out
+            showDashboardView();
         });
         
         showSignupLink.addEventListener('click', (e) => {
             e.preventDefault();
-            loginForm.style.display = 'block';
-            signupForm.style.display = 'none';
-            document.getElementById('login-form-content').style.display = 'none';
-            document.getElementById('signup-form-content').style.display = 'block';
+            loginForm.style.display = 'none';
+            signupForm.style.display = 'block';
             authError.style.display = 'none';
         });
 
@@ -194,14 +186,13 @@
             e.preventDefault();
             signupForm.style.display = 'none';
             loginForm.style.display = 'block';
-            document.getElementById('signup-form-content').style.display = 'none';
-            document.getElementById('login-form-content').style.display = 'block';
             authError.style.display = 'none';
         });
 
         // --- FIRESTORE LOGIC ---
         function getSyllabusDocRef(userId) {
-            return doc(db, "artifacts", appId, "users", userId);
+            // Using a simpler path for user data
+            return doc(db, "users", userId);
         }
 
         async function initializeFirestoreData(userId) {
@@ -403,6 +394,7 @@
         
         // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', () => {
+            showLoader(true); // Show loader on initial load
             subjectCards.forEach(card => {
                 card.addEventListener('click', () => {
                     const subject = card.dataset.subject;
@@ -419,7 +411,6 @@
             loginForm.style.display = 'block';
 
             startCountdowns();
-            handleInitialAuth();
         });
 
     </script>
@@ -529,43 +520,37 @@
         <!-- Authentication View -->
         <div id="auth-view" style="display: none;">
             <form id="login-form" class="auth-form">
-                <div id="login-form-content">
-                    <h2>Login</h2>
-                    <div id="auth-error"></div>
-                    <div class="form-group">
-                        <label for="login-email">Email</label>
-                        <input type="email" id="login-email" name="email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="login-password">Password</label>
-                        <input type="password" id="login-password" name="password" required>
-                    </div>
-                    <button type="submit" class="auth-btn">Login</button>
-                    <p class="auth-switch">Don't have an account? <a href="#" id="show-signup">Sign Up</a></p>
+                <h2>Login</h2>
+                <div id="auth-error"></div>
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" name="email" required>
                 </div>
-
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" name="password" required>
+                </div>
+                <button type="submit" class="auth-btn">Login</button>
                 <div class="divider">OR</div>
-
                 <button type="button" id="google-signin-btn" class="google-btn">
                     <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.222,0-9.658-3.317-11.28-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C44.438,36.338,48,30.418,48,24c0-1.94-0.222-3.83-0.636-5.638L43.611,20.083z"></path></svg>
                     Sign in with Google
                 </button>
+                <p class="auth-switch">Don't have an account? <a href="#" id="show-signup">Sign Up</a></p>
             </form>
 
             <form id="signup-form" class="auth-form" style="display: none;">
                  <h2>Sign Up</h2>
-                 <div id="signup-form-content">
-                    <div class="form-group">
-                        <label for="signup-email">Email</label>
-                        <input type="email" id="signup-email" name="email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="signup-password">Password</label>
-                        <input type="password" id="signup-password" name="password" required>
-                    </div>
-                    <button type="submit" class="auth-btn">Sign Up</button>
-                    <p class="auth-switch">Already have an account? <a href="#" id="show-login">Login</a></p>
-                </div>
+                 <div class="form-group">
+                     <label for="signup-email">Email</label>
+                     <input type="email" id="signup-email" name="email" required>
+                 </div>
+                 <div class="form-group">
+                     <label for="signup-password">Password</label>
+                     <input type="password" id="signup-password" name="password" required>
+                 </div>
+                 <button type="submit" class="auth-btn">Sign Up</button>
+                 <p class="auth-switch">Already have an account? <a href="#" id="show-login">Login</a></p>
             </form>
         </div>
 
