@@ -59,6 +59,13 @@
         .auth-message { padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; text-align: center; display: none; }
         .auth-message.error { color: var(--error-color); background-color: rgba(207, 102, 121, 0.1); }
         .auth-message.success { color: var(--secondary-color); background-color: rgba(3, 218, 198, 0.1); }
+        .divider { display: flex; align-items: center; text-align: center; color: var(--on-surface-medium-emphasis); margin: 1.5rem 0; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border-color); }
+        .divider:not(:empty)::before { margin-right: .25em; }
+        .divider:not(:empty)::after { margin-left: .25em; }
+        .google-btn { width: 100%; padding: 0.8rem; background-color: #fff; color: #333; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background-color 0.3s; display: flex; justify-content: center; align-items: center; gap: 0.75rem; }
+        .google-btn:hover { background-color: #f2f2f2; }
+        .google-btn svg { width: 18px; height: 18px; }
 
         /* --- APP VIEW --- */
         .main-header { text-align: center; margin-bottom: 2rem; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
@@ -193,6 +200,11 @@
                 </div>
                 <button type="submit" class="auth-btn">Login</button>
                 <p class="forgot-password-link"><a id="show-forgot-password">Forgot Password?</a></p>
+                <div class="divider">OR</div>
+                <button type="button" id="google-signin-btn" class="google-btn">
+                    <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.222,0-9.658-3.317-11.28-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C44.438,36.338,48,30.418,48,24c0-1.94-0.222-3.83-0.636-5.638L43.611,20.083z"></path></svg>
+                    Sign in with Google
+                </button>
                 <p class="auth-switch">Don't have an account? <a id="show-signup">Sign Up</a></p>
             </form>
             <!-- Signup Form -->
@@ -303,7 +315,9 @@
             createUserWithEmailAndPassword, 
             signInWithEmailAndPassword, 
             signOut,
-            sendPasswordResetEmail
+            sendPasswordResetEmail,
+            GoogleAuthProvider,
+            signInWithPopup
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { 
             getFirestore, 
@@ -325,6 +339,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const googleProvider = new GoogleAuthProvider();
 
         let state = {};
         let unsubscribeFromFirestore = null;
@@ -348,6 +363,7 @@
         const showLoginLink = document.getElementById('show-login');
         const showForgotPasswordLink = document.getElementById('show-forgot-password');
         const backToLoginLink = document.getElementById('back-to-login');
+        const googleSignInBtn = document.getElementById('google-signin-btn');
         // Auth Messages
         const authMessageContainer = document.getElementById('auth-message-container');
         // App Pages
@@ -481,6 +497,18 @@
             try {
                 const userCredential = await createUserWithEmailAndPassword(auth, signupForm.email.value, signupForm.password.value);
                 // The onAuthStateChanged listener will handle the rest
+            } catch (error) {
+                showAuthMessage(error.message);
+                showLoader(false);
+            }
+        });
+
+        googleSignInBtn.addEventListener('click', async () => {
+            showLoader(true);
+            clearAuthMessages();
+            try {
+                await signInWithPopup(auth, googleProvider);
+                // onAuthStateChanged will handle the rest
             } catch (error) {
                 showAuthMessage(error.message);
                 showLoader(false);
