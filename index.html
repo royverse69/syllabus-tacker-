@@ -184,7 +184,7 @@
     </div>
 
     <!-- AUTHENTICATION VIEW -->
-    <div id="auth-view" class="view active">
+    <div id="auth-view" class="view">
         <div class="auth-container">
             <div id="auth-message-container"></div>
             <!-- Login Form -->
@@ -416,21 +416,28 @@
         });
 
         async function loadUserSession(user) {
-            showLoader(true);
-            userEmailEl.textContent = user.email;
-            const docRef = doc(db, "users", user.uid);
-            const docSnap = await getDoc(docRef);
+            try {
+                showLoader(true);
+                userEmailEl.textContent = user.email;
+                const docRef = doc(db, "users", user.uid);
+                const docSnap = await getDoc(docRef);
 
-            if (docSnap.exists() && docSnap.data().syllabus) {
-                state = docSnap.data().syllabus;
-            } else {
-                await initializeFirestoreData(user.uid);
+                if (docSnap.exists() && docSnap.data().syllabus) {
+                    state = docSnap.data().syllabus;
+                } else {
+                    await initializeFirestoreData(user.uid);
+                }
+                
+                attachRealtimeListener(user.uid);
+                showView('app-view');
+                showPage('dashboard-page');
+            } catch (error) {
+                console.error("Error loading user session:", error);
+                showAuthMessage("Failed to load your data. Please log out and try again.");
+                signOut(auth); // Log out on critical data load failure
+            } finally {
+                showLoader(false);
             }
-            
-            attachRealtimeListener(user.uid);
-            showView('app-view');
-            showPage('dashboard-page');
-            showLoader(false);
         }
 
         async function initializeFirestoreData(userId) {
@@ -635,6 +642,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             // The onAuthStateChanged listener will handle showing the initial view
             showAuthForm('login-form');
+            startCountdowns();
         });
 
         function startCountdowns() {
@@ -664,7 +672,6 @@
             updateCountdown();
             setInterval(updateCountdown, 60000);
         }
-        startCountdowns();
     </script>
 </body>
-</html>
+</ht
