@@ -184,7 +184,7 @@
     </div>
 
     <!-- AUTHENTICATION VIEW -->
-    <div id="auth-view" class="view">
+    <div id="auth-view" class="view active">
         <div class="auth-container">
             <div id="auth-message-container"></div>
             <!-- Login Form -->
@@ -634,6 +634,7 @@
         // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', () => {
             // The onAuthStateChanged listener will handle showing the initial view
+            showAuthForm('login-form');
         });
 
         function startCountdowns() {
@@ -666,4 +667,4 @@
         startCountdowns();
     </script>
 </body>
-</ht
+</html>
