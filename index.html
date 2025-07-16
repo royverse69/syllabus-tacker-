@@ -44,7 +44,14 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* --- AUTH VIEW --- */
-        #auth-view { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem; }
+        /* FIXED: Changed #auth-view to #auth-view.active to ensure it only displays when the 'active' class is present. */
+        #auth-view.active { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            padding: 1rem; 
+        }
         .auth-container { max-width: 400px; width: 100%; padding: 2.5rem; background-color: var(--surface-color); border-radius: 12px; border: 1px solid var(--border-color); }
         .auth-form { display: none; } /* Hide all forms by default */
         .auth-form.active { display: block; animation: fadeIn 0.3s ease-in-out; } /* Show active form */
@@ -245,7 +252,7 @@
                 </header>
                 <section class="deadlines">
                     <div class="deadline-card">
-                        <h2>Master Deadline</h2>
+                        <h2>Mains 2026</h2>
                         <div id="master-countdown" class="countdown">Loading...</div>
                     </div>
                     <div class="deadline-card">
@@ -674,4 +681,4 @@
         }
     </script>
 </body>
-</ht
+</html>
