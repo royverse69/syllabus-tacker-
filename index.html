@@ -1,338 +1,154 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Syllabus Tracker Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        'primary': '#bb86fc',
+                        'primary-variant': '#3700b3',
+                        'secondary': '#03dac6',
+                        'background': '#121212',
+                        'surface': '#1e1e1e',
+                        'error': '#cf6679',
+                        'on-primary': '#000000',
+                        'on-secondary': '#000000',
+                        'on-background': '#ffffff',
+                        'on-surface': '#e0e0e0',
+                        'on-surface-medium': 'rgba(255, 255, 255, 0.6)',
+                        'completed': '#4caf50',
+                        'weak': '#ffc107',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --bg-color: #121212;
-            --surface-color: #1e1e1e;
-            --primary-color: #bb86fc;
-            --primary-variant-color: #3700b3;
-            --secondary-color: #03dac6;
-            --on-surface-color: #e0e0e0;
-            --on-surface-medium-emphasis: rgba(255, 255, 255, 0.6);
-            --completed-color: #4caf50;
-            --weak-color: #ffc107;
-            --error-color: #cf6679;
-            --border-color: rgba(255, 255, 255, 0.12);
+        /* Custom styles for custom checkboxes and dropdowns */
+        .custom-checkbox:checked {
+            background-color: #03dac6; /* Using hex for direct override */
+            border-color: #03dac6;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--on-surface-color);
-            line-height: 1.6;
+        .custom-checkbox:checked::before {
+            content: '✔';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px;
+            color: #000000;
         }
-        .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 1rem 1rem 6rem 1rem; }
-
-        /* --- VIEWS & PAGES --- */
-        .view { display: none; } /* All views are hidden by default */
-        .view.active { display: block; } /* Only the active view is shown */
-        .page { display: none; }
-        .page.active { display: block; animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* --- LOADER --- */
-        .loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .spinner { border: 4px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top: 4px solid var(--primary-color); width: 50px; height: 50px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* --- AUTH VIEW --- */
-        /* FIXED: Changed #auth-view to #auth-view.active to ensure it only displays when the 'active' class is present. */
-        #auth-view.active { 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            padding: 1rem; 
+        .chapter-details {
+            transition: max-height 0.5s ease-in-out;
+            max-height: 0;
+            overflow: hidden;
         }
-        .auth-container { max-width: 400px; width: 100%; padding: 2.5rem; background-color: var(--surface-color); border-radius: 12px; border: 1px solid var(--border-color); }
-        .auth-form { display: none; } /* Hide all forms by default */
-        .auth-form.active { display: block; animation: fadeIn 0.3s ease-in-out; } /* Show active form */
-        .auth-form h2 { text-align: center; margin-bottom: 2rem; color: var(--primary-color); }
-        .form-group { margin-bottom: 1.5rem; }
-        .form-group label { display: block; margin-bottom: 0.5rem; color: var(--on-surface-medium-emphasis); }
-        .form-group input { width: 100%; padding: 0.8rem; background-color: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--on-surface-color); font-size: 1rem; }
-        .auth-btn { width: 100%; padding: 0.8rem; background-color: var(--primary-color); color: var(--bg-color); border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: background-color 0.3s; }
-        .auth-btn:hover { background-color: #a050f8; }
-        .auth-switch, .forgot-password-link { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; }
-        .auth-switch a, .forgot-password-link a { color: var(--secondary-color); text-decoration: none; cursor: pointer; }
-        .auth-message { padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; text-align: center; display: none; }
-        .auth-message.error { color: var(--error-color); background-color: rgba(207, 102, 121, 0.1); }
-        .auth-message.success { color: var(--secondary-color); background-color: rgba(3, 218, 198, 0.1); }
-        .divider { display: flex; align-items: center; text-align: center; color: var(--on-surface-medium-emphasis); margin: 1.5rem 0; }
-        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border-color); }
-        .divider:not(:empty)::before { margin-right: .25em; }
-        .divider:not(:empty)::after { margin-left: .25em; }
-        .google-btn { width: 100%; padding: 0.8rem; background-color: #fff; color: #333; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background-color 0.3s; display: flex; justify-content: center; align-items: center; gap: 0.75rem; }
-        .google-btn:hover { background-color: #f2f2f2; }
-        .google-btn svg { width: 18px; height: 18px; }
-
-        /* --- APP VIEW --- */
-        .main-header { text-align: center; margin-bottom: 2rem; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
-        .main-header h1 { font-size: 2.5rem; font-weight: 700; color: var(--primary-color); letter-spacing: 1px; }
-
-        .deadlines, .subjects { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
-        .deadlines { margin-bottom: 3rem; }
-        .deadline-card, .subject-card { background-color: var(--surface-color); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.3s ease, box-shadow 0.3s ease; }
-        .deadline-card:hover, .subject-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
-        .deadline-card { text-align: center; }
-        .subject-card { text-align: center; cursor: pointer; padding: 2rem; }
-        .deadline-card h2 { font-size: 1.2rem; margin-bottom: 1rem; color: var(--secondary-color); font-weight: 600; }
-        .countdown { font-size: 1.5rem; font-weight: 300; letter-spacing: 1px; }
-        .countdown span { font-weight: 700; color: var(--on-surface-color); }
-        .subject-card h3 { font-size: 1.8rem; margin-bottom: 0.5rem; font-weight: 600; }
-
-        /* Subject Detail View */
-        .subject-view { background-color: var(--surface-color); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color); }
-        .subject-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); }
-        .subject-header h2 { font-size: 2rem; color: var(--primary-color); }
-        .back-btn { background: none; border: none; color: var(--secondary-color); font-size: 1.5rem; cursor: pointer; }
-        .progress-section { margin-bottom: 2rem; }
-        .progress-stats { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--on-surface-medium-emphasis); }
-        .progress-bar-container { width: 100%; height: 12px; background-color: #333; border-radius: 6px; overflow: hidden; }
-        .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary-variant-color), var(--primary-color)); border-radius: 6px; transition: width 0.5s ease-in-out; }
-        .chapter-list { list-style: none; }
-        .chapter-item { background-color: #2c2c2c; margin-bottom: 1rem; padding: 1rem 1.5rem; border-radius: 8px; border-left: 5px solid var(--on-surface-medium-emphasis); transition: all 0.3s ease; }
-        .chapter-item.completed { background-color: rgba(76, 175, 80, 0.1); border-left-color: var(--completed-color); }
-        .chapter-item.weak { border-left-color: var(--weak-color); }
-        .chapter-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .chapter-title { font-size: 1.1rem; font-weight: 600; }
-        .chapter-item.completed .chapter-title { text-decoration: line-through; color: var(--on-surface-medium-emphasis); }
-        .weak-btn { background: none; border: 1px solid var(--weak-color); color: var(--weak-color); padding: 0.3rem 0.6rem; border-radius: 5px; cursor: pointer; font-size: 0.8rem; transition: background-color 0.3s, color 0.3s; }
-        .weak-btn:hover, .chapter-item.weak .weak-btn { background-color: var(--weak-color); color: var(--bg-color); }
-        .chapter-details { max-height: 0; overflow: hidden; transition: max-height 0.5s ease; }
-        .chapter-details.open { max-height: 200px; }
-        .tasks { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; flex-wrap: wrap; gap: 1rem; }
-        .task-item { display: flex; align-items: center; gap: 0.5rem; }
-        .task-item label { font-size: 0.9rem; color: var(--on-surface-medium-emphasis); }
-        .task-item input[type="checkbox"] { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; border: 2px solid var(--secondary-color); border-radius: 4px; cursor: pointer; position: relative; transition: background-color 0.2s, border-color 0.2s; }
-        .task-item input[type="checkbox"]:checked { background-color: var(--secondary-color); border-color: var(--secondary-color); }
-        .task-item input[type="checkbox"]:checked::before { content: '✔'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; color: var(--bg-color); }
-
-        /* --- PROFILE PAGE --- */
-        #profile-page .profile-card { background-color: var(--surface-color); padding: 2rem; border-radius: 12px; text-align: center; }
-        #profile-page h2 { margin-bottom: 1rem; color: var(--primary-color); }
-        #profile-page #user-email { color: var(--on-surface-medium-emphasis); margin-bottom: 2rem; word-break: break-all; }
-        #profile-page .logout-btn { background-color: var(--error-color); color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background-color 0.3s; width: 100%; }
-        #profile-page .logout-btn:hover { background-color: #b04356; }
-        
-        /* --- BOTTOM NAVIGATION --- */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: var(--surface-color);
-            display: flex;
-            justify-content: space-around;
-            border-top: 1px solid var(--border-color);
-            padding: 0.5rem 0;
-            z-index: 100;
-        }
-        .nav-btn {
-            background: none;
-            border: none;
-            color: var(--on-surface-medium-emphasis);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 0.5rem;
-            cursor: pointer;
-            transition: color 0.3s;
-            font-size: 0.75rem;
-        }
-        .nav-btn svg {
-            width: 24px;
-            height: 24px;
-            margin-bottom: 4px;
-        }
-        .nav-btn.active {
-            color: var(--primary-color);
-        }
-
-        /* --- RESPONSIVENESS --- */
-        @media (max-width: 768px) {
-            .main-header h1 { font-size: 2rem; }
-            .subject-header h2 { font-size: 1.5rem; }
-            .tasks { flex-direction: column; align-items: flex-start; }
-            .container { padding: 1rem 1rem 7rem 1rem; }
-        }
-        @media (min-width: 769px) {
-            .bottom-nav {
-                left: 0;
-                top: 0;
-                bottom: 0;
-                right: auto;
-                width: 80px;
-                flex-direction: column;
-                justify-content: flex-start;
-                padding-top: 2rem;
-                gap: 1.5rem;
-                border-top: none;
-                border-right: 1px solid var(--border-color);
-            }
-            .container {
-                padding: 1rem 1rem 1rem 100px; /* 80px nav + 20px padding */
-            }
+        .chapter-details.open {
+            max-height: 200px; /* Adjust as needed */
         }
     </style>
 </head>
-<body>
+<body class="bg-background text-on-surface font-sans">
 
-    <div id="loader" class="loader">
-        <div class="spinner"></div>
+    <div id="loader" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50">
+        <div class="w-12 h-12 border-4 border-gray-600 border-t-primary rounded-full animate-spin"></div>
     </div>
 
     <!-- AUTHENTICATION VIEW -->
-    <div id="auth-view" class="view">
-        <div class="auth-container">
-            <div id="auth-message-container"></div>
-            <!-- Login Form -->
-            <form id="login-form" class="auth-form">
-                <h2>Login</h2>
-                <div class="form-group">
-                    <label for="login-email">Email</label>
-                    <input type="email" id="login-email" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="login-password">Password</label>
-                    <input type="password" id="login-password" name="password" required>
-                </div>
-                <button type="submit" class="auth-btn">Login</button>
-                <p class="forgot-password-link"><a id="show-forgot-password">Forgot Password?</a></p>
-                <div class="divider">OR</div>
-                <button type="button" id="google-signin-btn" class="google-btn">
-                    <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.222,0-9.658-3.317-11.28-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C44.438,36.338,48,30.418,48,24c0-1.94-0.222-3.83-0.636-5.638L43.611,20.083z"></path></svg>
-                    Sign in with Google
-                </button>
-                <p class="auth-switch">Don't have an account? <a id="show-signup">Sign Up</a></p>
-            </form>
-            <!-- Signup Form -->
-            <form id="signup-form" class="auth-form">
-                <h2>Sign Up</h2>
-                <div class="form-group">
-                    <label for="signup-email">Email</label>
-                    <input type="email" id="signup-email" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="signup-password">Password</label>
-                    <input type="password" id="signup-password" name="password" required>
-                </div>
-                <button type="submit" class="auth-btn">Sign Up</button>
-                <p class="auth-switch">Already have an account? <a id="show-login">Login</a></p>
-            </form>
-            <!-- Forgot Password Form -->
-            <form id="forgot-password-form" class="auth-form">
-                <h2>Reset Password</h2>
-                <p style="text-align: center; margin-bottom: 1rem; font-size: 0.9rem; color: var(--on-surface-medium-emphasis);">Enter your email to receive a reset link.</p>
-                <div class="form-group">
-                    <label for="forgot-email">Email</label>
-                    <input type="email" id="forgot-email" name="email" required>
-                </div>
-                <button type="submit" class="auth-btn">Send Reset Link</button>
-                <p class="auth-switch"><a id="back-to-login">Back to Login</a></p>
-            </form>
-        </div>
-    </div>
-
+    
     <!-- MAIN APP VIEW -->
-    <div id="app-view" class="view">
-        <div class="container">
-            <!-- Dashboard Page -->
-            <div id="dashboard-page" class="page">
-                <header class="main-header">
-                    <h1>Dashboard</h1>
-                </header>
-                <section class="deadlines">
-                    <div class="deadline-card">
-                        <h2>Mains 2026</h2>
-                        <div id="master-countdown" class="countdown">Loading...</div>
-                    </div>
-                    <div class="deadline-card">
-                        <h2>Syllabus Completion</h2>
-                        <div id="syllabus-countdown" class="countdown">Loading...</div>
-                    </div>
-                </section>
-                <section class="subjects">
-                    <div class="subject-card" data-subject="physics"><h3>Physics</h3></div>
-                    <div class="subject-card" data-subject="chemistry"><h3>Chemistry</h3></div>
-                    <div class="subject-card" data-subject="math"><h3>Mathematics</h3></div>
-                </section>
-            </div>
-            <!-- Subject Detail Page (dynamically populated) -->
-            <div id="subject-detail-page" class="page">
-                 <div class="subject-view">
-                    <header class="subject-header">
-                        <button class="back-btn" id="back-to-dashboard-btn">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                        </button>
-                        <h2 id="subject-title"></h2>
-                    </header>
-                    <section class="progress-section">
-                        <div class="progress-stats">
-                            <span id="progress-text">Progress: 0%</span>
-                            <span id="chapter-count">Chapters: 0/0</span>
-                        </div>
-                        <div class="progress-bar-container">
-                            <div id="progress-bar" class="progress-bar"></div>
-                        </div>
-                    </section>
-                    <ul id="chapter-list" class="chapter-list"></ul>
+    <div id="app-view" class="view hidden">
+        <div class="md:flex">
+            <!-- SIDE/BOTTOM NAVIGATION -->
+            <nav class="fixed bottom-0 left-0 right-0 h-16 bg-surface border-t border-gray-700 md:relative md:h-screen md:w-20 lg:w-64 md:border-t-0 md:border-r flex md:flex-col justify-between z-20">
+                <div class="flex justify-around w-full md:flex-col md:items-center md:gap-y-2 md:pt-6">
+                    <button class="nav-btn flex flex-col items-center justify-center h-full px-4 md:w-full md:h-auto md:py-4 lg:flex-row lg:justify-start lg:px-6 lg:gap-x-4" data-page="dashboard-page">
+                        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        <span class="text-xs mt-1 md:hidden lg:inline lg:text-base lg:mt-0">Dashboard</span>
+                    </button>
                 </div>
-            </div>
-            <!-- Profile Page -->
-            <div id="profile-page" class="page">
-                <header class="main-header">
-                    <h1>Profile</h1>
-                </header>
-                <div class="profile-card">
-                    <h2>User Information</h2>
-                    <p id="user-email">Loading...</p>
-                    <button class="logout-btn">Logout</button>
+                <div class="flex justify-around w-full md:w-auto md:pb-6">
+                     <button class="nav-btn flex flex-col items-center justify-center h-full px-4 md:w-full md:h-auto md:py-4 lg:flex-row lg:justify-start lg:px-6 lg:gap-x-4" data-page="profile-page">
+                        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <span class="text-xs mt-1 md:hidden lg:inline lg:text-base lg:mt-0">Profile</span>
+                    </button>
                 </div>
-            </div>
-        </div>
+            </nav>
 
-        <!-- BOTTOM NAVIGATION -->
-        <nav class="bottom-nav">
-            <button class="nav-btn active" data-page="dashboard-page">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                <span>Dashboard</span>
-            </button>
-            <button class="nav-btn" data-page="profile-page">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                <span>Profile</span>
-            </button>
-        </nav>
+            <main class="w-full pb-20 md:pb-0">
+                <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+                    <!-- Dashboard Page -->
+                    <div id="dashboard-page" class="page">
+                        <header class="text-center mb-8">
+                            <h1 class="text-4xl md:text-5xl font-bold text-primary tracking-wide">Dashboard</h1>
+                        </header>
+                        <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                            <div class="bg-surface border border-gray-700 rounded-xl p-6 shadow-lg text-center">
+                                <h2 class="text-xl font-semibold text-secondary mb-3">Mains 2026</h2>
+                                <div id="master-countdown" class="text-3xl font-light"><span class="font-bold">Loading...</span></div>
+                            </div>
+                            <div class="bg-surface border border-gray-700 rounded-xl p-6 shadow-lg text-center">
+                                <h2 class="text-xl font-semibold text-secondary mb-3">Syllabus Completion</h2>
+                                <div id="syllabus-countdown" class="text-3xl font-light"><span class="font-bold">Loading...</span></div>
+                            </div>
+                        </section>
+                        <section id="subjects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Subject cards will be rendered here by JS -->
+                        </section>
+                    </div>
+                    <!-- Subject Detail Page -->
+                    <div id="subject-detail-page" class="page hidden">
+                         <div class="bg-surface border border-gray-700 rounded-xl p-6 shadow-lg">
+                            <header class="flex items-center mb-6 pb-4 border-b border-gray-700">
+                                <button class="back-btn mr-4 text-secondary" id="back-to-dashboard-btn">
+                                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                                </button>
+                                <h2 id="subject-title" class="text-3xl font-bold text-primary"></h2>
+                            </header>
+                            <section class="mb-6">
+                                <div class="flex justify-between items-center mb-2 text-sm text-on-surface-medium">
+                                    <span id="progress-text">Progress: 0%</span>
+                                    <span id="chapter-count">Chapters: 0/0</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2.5">
+                                    <div id="progress-bar" class="bg-gradient-to-r from-primary-variant to-primary h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                            </section>
+                            <ul id="chapter-list" class="space-y-3"></ul>
+                        </div>
+                    </div>
+                    <!-- Profile Page -->
+                    <div id="profile-page" class="page hidden">
+                        <header class="text-center mb-8">
+                            <h1 class="text-4xl md:text-5xl font-bold text-primary tracking-wide">Profile</h1>
+                        </header>
+                        <div class="max-w-md mx-auto bg-surface border border-gray-700 rounded-xl p-8 shadow-lg text-center">
+                            <h2 class="text-2xl font-bold mb-2">User Information</h2>
+                            <p id="user-email" class="text-on-surface-medium mb-6 break-all">Loading...</p>
+                            <button class="logout-btn w-full bg-error text-white font-bold py-2 px-4 rounded-lg hover:bg-opacity-90 transition duration-300">Logout</button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
     </div>
 
     <script type="module">
-        // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
-            getAuth, 
-            onAuthStateChanged, 
-            createUserWithEmailAndPassword, 
-            signInWithEmailAndPassword, 
-            signOut,
-            sendPasswordResetEmail,
-            GoogleAuthProvider,
-            signInWithPopup
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { 
-            getFirestore, 
-            doc, 
-            getDoc, 
-            setDoc,
-            onSnapshot
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD9In71uHgnU2s93aW6IxpgVdGQQ_4g6Uk",
@@ -346,7 +162,6 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const googleProvider = new GoogleAuthProvider();
 
         let state = {};
         let unsubscribeFromFirestore = null;
@@ -361,29 +176,21 @@
         const loader = document.getElementById('loader');
         const authView = document.getElementById('auth-view');
         const appView = document.getElementById('app-view');
-        // Auth Forms
         const loginForm = document.getElementById('login-form');
         const signupForm = document.getElementById('signup-form');
         const forgotPasswordForm = document.getElementById('forgot-password-form');
-        // Auth Links
         const showSignupLink = document.getElementById('show-signup');
         const showLoginLink = document.getElementById('show-login');
         const showForgotPasswordLink = document.getElementById('show-forgot-password');
         const backToLoginLink = document.getElementById('back-to-login');
-        const googleSignInBtn = document.getElementById('google-signin-btn');
-        // Auth Messages
         const authMessageContainer = document.getElementById('auth-message-container');
-        // App Pages
         const pages = document.querySelectorAll('.page');
         const subjectDetailPage = document.getElementById('subject-detail-page');
-        // Nav
         const navButtons = document.querySelectorAll('.nav-btn');
         const backToDashboardBtn = document.getElementById('back-to-dashboard-btn');
-        // Profile
         const userEmailEl = document.getElementById('user-email');
         const logoutBtn = document.querySelector('.logout-btn');
-        // Subject Detail
-        const subjectCards = document.querySelectorAll('.subject-card');
+        const subjectsGrid = document.getElementById('subjects-grid');
         const subjectTitle = document.getElementById('subject-title');
         const chapterList = document.getElementById('chapter-list');
         const progressBar = document.getElementById('progress-bar');
@@ -392,19 +199,26 @@
 
         // --- Core App Logic ---
         const showView = (viewId) => {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
+            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+            document.getElementById(viewId).classList.remove('hidden');
         };
 
         const showPage = (pageId) => {
-            pages.forEach(p => p.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            // Update nav button active state
+            pages.forEach(p => p.classList.add('hidden'));
+            const pageToShow = document.getElementById(pageId);
+            if(pageToShow) pageToShow.classList.remove('hidden');
+            
             navButtons.forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.page === pageId);
+                btn.classList.toggle('text-primary', btn.dataset.page === pageId);
+                btn.classList.toggle('text-on-surface-medium', btn.dataset.page !== pageId);
             });
-        };
 
+            // If we are showing the dashboard, render it to show latest progress
+            if (pageId === 'dashboard-page') {
+                renderDashboard();
+            }
+        };
+        
         const showLoader = (show) => {
             loader.style.display = show ? 'flex' : 'none';
         };
@@ -417,7 +231,7 @@
                 if (unsubscribeFromFirestore) unsubscribeFromFirestore();
                 state = {};
                 showView('auth-view');
-                showAuthForm('login-form'); // Default to login form on logout
+                showAuthForm('login-form');
                 showLoader(false);
             }
         });
@@ -429,7 +243,7 @@
                 const docRef = doc(db, "users", user.uid);
                 const docSnap = await getDoc(docRef);
 
-                if (docSnap.exists() && docSnap.data().syllabus) {
+                if (docSnap.exists() && docSnap.data().syllabus && Object.keys(docSnap.data().syllabus).length > 0) {
                     state = docSnap.data().syllabus;
                 } else {
                     await initializeFirestoreData(user.uid);
@@ -441,7 +255,7 @@
             } catch (error) {
                 console.error("Error loading user session:", error);
                 showAuthMessage("Failed to load your data. Please log out and try again.");
-                signOut(auth); // Log out on critical data load failure
+                signOut(auth);
             } finally {
                 showLoader(false);
             }
@@ -456,34 +270,49 @@
             const docRef = doc(db, "users", userId);
             await setDoc(docRef, { syllabus: initialData });
         }
-
+        
+        // --- REAL-TIME DATA HANDLING ---
         function attachRealtimeListener(userId) {
             if (unsubscribeFromFirestore) unsubscribeFromFirestore();
             const docRef = doc(db, "users", userId);
+            
+            // onSnapshot listens for any changes in the document
             unsubscribeFromFirestore = onSnapshot(docRef, (docSnap) => {
                 if (docSnap.exists()) {
+                    console.log("Real-time update received from Firestore.");
                     state = docSnap.data().syllabus;
-                    // If subject detail view is active, refresh it
-                    const currentSubject = subjectTitle.dataset.currentSubject;
-                    if (subjectDetailPage.classList.contains('active') && currentSubject) {
-                        renderSubject(currentSubject);
-                    }
+                    
+                    // After getting an update, re-render the currently active page to show the changes
+                    updateActivePage();
                 }
             });
         }
 
+        // This function checks which page is active and calls its render function
+        function updateActivePage() {
+            const activePage = document.querySelector('.page:not(.hidden)');
+            if (!activePage) return;
+
+            if (activePage.id === 'dashboard-page') {
+                renderDashboard();
+            } else if (activePage.id === 'subject-detail-page') {
+                const currentSubject = subjectTitle.dataset.currentSubject;
+                if (currentSubject) {
+                    renderSubject(currentSubject);
+                }
+            }
+        }
+
         const showAuthMessage = (message, type = 'error') => {
-            authMessageContainer.innerHTML = `<div class="auth-message ${type}">${message}</div>`;
-            authMessageContainer.querySelector('.auth-message').style.display = 'block';
+            const colorClass = type === 'error' ? 'bg-error/20 text-error' : 'bg-secondary/20 text-secondary';
+            authMessageContainer.innerHTML = `<div class="p-3 rounded-lg ${colorClass}">${message}</div>`;
         };
 
-        const clearAuthMessages = () => {
-            authMessageContainer.innerHTML = '';
-        };
+        const clearAuthMessages = () => { authMessageContainer.innerHTML = ''; };
 
         const showAuthForm = (formId) => {
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-            document.getElementById(formId).classList.add('active');
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.add('hidden'));
+            document.getElementById(formId).classList.remove('hidden');
             clearAuthMessages();
         }
 
@@ -493,53 +322,26 @@
         backToLoginLink.addEventListener('click', () => showAuthForm('login-form'));
 
         loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showLoader(true);
-            clearAuthMessages();
-            try {
-                await signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value);
-            } catch (error) {
-                showAuthMessage(error.message);
-                showLoader(false);
-            }
+            e.preventDefault(); showLoader(true); clearAuthMessages();
+            try { await signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value); } 
+            catch (error) { showAuthMessage(error.message); } 
+            finally { showLoader(false); }
         });
 
         signupForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showLoader(true);
-            clearAuthMessages();
-            try {
-                const userCredential = await createUserWithEmailAndPassword(auth, signupForm.email.value, signupForm.password.value);
-                // The onAuthStateChanged listener will handle the rest
-            } catch (error) {
-                showAuthMessage(error.message);
-                showLoader(false);
-            }
+            e.preventDefault(); showLoader(true); clearAuthMessages();
+            try { await createUserWithEmailAndPassword(auth, signupForm.email.value, signupForm.password.value); } 
+            catch (error) { showAuthMessage(error.message); } 
+            finally { showLoader(false); }
         });
-
-        googleSignInBtn.addEventListener('click', async () => {
-            showLoader(true);
-            clearAuthMessages();
-            try {
-                await signInWithPopup(auth, googleProvider);
-                // onAuthStateChanged will handle the rest
-            } catch (error) {
-                showAuthMessage(error.message);
-                showLoader(false);
-            }
-        });
-
+        
         forgotPasswordForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showLoader(true);
-            clearAuthMessages();
+            e.preventDefault(); showLoader(true); clearAuthMessages();
             try {
                 await sendPasswordResetEmail(auth, forgotPasswordForm.email.value);
                 showAuthMessage('Password reset email sent! Check your inbox.', 'success');
-            } catch (error) {
-                showAuthMessage(error.message);
-            }
-            showLoader(false);
+            } catch (error) { showAuthMessage(error.message); } 
+            finally { showLoader(false); }
         });
 
         logoutBtn.addEventListener('click', () => signOut(auth));
@@ -548,19 +350,49 @@
         navButtons.forEach(btn => {
             btn.addEventListener('click', () => showPage(btn.dataset.page));
         });
-
-        subjectCards.forEach(card => {
-            card.addEventListener('click', () => {
-                const subject = card.dataset.subject;
-                renderSubject(subject);
-                showPage('subject-detail-page');
-            });
-        });
         
         backToDashboardBtn.addEventListener('click', () => showPage('dashboard-page'));
 
-        // --- Subject Logic & Rendering ---
+        // --- Rendering Logic ---
+
+        function renderDashboard() {
+            subjectsGrid.innerHTML = '';
+            if (!state || Object.keys(state).length === 0) return;
+
+            Object.keys(syllabusData).forEach(subjectKey => {
+                const subjectChapters = state[subjectKey] || [];
+                const totalChapters = subjectChapters.length;
+                const completedChapters = subjectChapters.filter(ch => ch.isComplete).length;
+                const percentage = totalChapters > 0 ? (completedChapters / totalChapters) * 100 : 0;
+
+                const card = document.createElement('div');
+                card.className = "subject-card bg-surface border border-gray-700 rounded-xl p-6 shadow-lg cursor-pointer transition-transform duration-300 hover:-translate-y-1 hover:shadow-primary/20";
+                card.dataset.subject = subjectKey;
+                
+                card.innerHTML = `
+                    <h3 class="text-2xl font-bold mb-4 text-center">${subjectKey.charAt(0).toUpperCase() + subjectKey.slice(1)}</h3>
+                    <div class="w-full bg-gray-700 rounded-full h-2.5 mb-2">
+                        <div class="bg-primary h-2.5 rounded-full" style="width: ${percentage}%"></div>
+                    </div>
+                    <p class="text-xs text-on-surface-medium text-center">${completedChapters} / ${totalChapters} Chapters (${percentage.toFixed(0)}%)</p>
+                `;
+                
+                card.addEventListener('click', () => {
+                    renderSubject(subjectKey);
+                    showPage('subject-detail-page');
+                });
+
+                subjectsGrid.appendChild(card);
+            });
+        }
+
         function renderSubject(subject) {
+            const openChapterIndices = new Set();
+            document.querySelectorAll('#chapter-list .chapter-details.open').forEach(details => {
+                const item = details.closest('.chapter-item');
+                if (item && item.dataset.index) openChapterIndices.add(item.dataset.index);
+            });
+
             subjectTitle.textContent = subject.charAt(0).toUpperCase() + subject.slice(1);
             subjectTitle.dataset.currentSubject = subject;
             chapterList.innerHTML = '';
@@ -570,36 +402,49 @@
             const subjectChapters = state[subject];
             subjectChapters.forEach((chapter, index) => {
                 const listItem = document.createElement('li');
-                listItem.className = 'chapter-item';
-                if (chapter.isComplete) listItem.classList.add('completed');
-                if (chapter.isWeak) listItem.classList.add('weak');
+                listItem.className = `chapter-item bg-gray-800/50 rounded-lg border-l-4 transition-colors duration-300 ${chapter.isComplete ? 'border-completed' : (chapter.isWeak ? 'border-weak' : 'border-gray-600')}`;
                 listItem.dataset.index = index;
 
                 listItem.innerHTML = `
-                    <div class="chapter-header">
-                        <span class="chapter-title">${chapter.name}</span>
-                        <button class="weak-btn">Mark as Weak</button>
+                    <div class="chapter-header flex justify-between items-center p-4 cursor-pointer">
+                        <span class="chapter-title font-semibold ${chapter.isComplete ? 'line-through text-on-surface-medium' : ''}">${chapter.name}</span>
+                        <svg class="w-5 h-5 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                     </div>
-                    <div class="chapter-details">
-                        <div class="tasks">
-                            <div class="task-item">
-                                <input type="checkbox" id="module-${subject}-${index}" data-task="module" ${chapter.tasks.module ? 'checked' : ''}>
-                                <label for="module-${subject}-${index}">Module</label>
+                    <div class="chapter-details px-4 pb-4">
+                        <div class="tasks pt-4 border-t border-gray-700 flex flex-col sm:flex-row gap-4">
+                            <div class="task-item flex items-center gap-2">
+                                <input type="checkbox" id="module-${subject}-${index}" data-task="module" ${chapter.tasks.module ? 'checked' : ''} class="custom-checkbox appearance-none relative w-5 h-5 border-2 border-secondary rounded cursor-pointer transition">
+                                <label for="module-${subject}-${index}" class="text-sm text-on-surface-medium">Module</label>
                             </div>
-                            <div class="task-item">
-                                <input type="checkbox" id="pyq-${subject}-${index}" data-task="pyq" ${chapter.tasks.pyq ? 'checked' : ''}>
-                                <label for="pyq-${subject}-${index}">PYQ</label>
+                            <div class="task-item flex items-center gap-2">
+                                <input type="checkbox" id="pyq-${subject}-${index}" data-task="pyq" ${chapter.tasks.pyq ? 'checked' : ''} class="custom-checkbox appearance-none relative w-5 h-5 border-2 border-secondary rounded cursor-pointer transition">
+                                <label for="pyq-${subject}-${index}" class="text-sm text-on-surface-medium">PYQ</label>
                             </div>
-                            <div class="task-item">
-                                <input type="checkbox" id="revision-${subject}-${index}" data-task="revision" ${chapter.tasks.revision ? 'checked' : ''}>
-                                <label for="revision-${subject}-${index}">Revision</label>
+                            <div class="task-item flex items-center gap-2">
+                                <input type="checkbox" id="revision-${subject}-${index}" data-task="revision" ${chapter.tasks.revision ? 'checked' : ''} class="custom-checkbox appearance-none relative w-5 h-5 border-2 border-secondary rounded cursor-pointer transition">
+                                <label for="revision-${subject}-${index}" class="text-sm text-on-surface-medium">Revision</label>
                             </div>
+                        </div>
+                        <div class="mt-4">
+                            <button class="weak-btn text-sm font-semibold py-1 px-3 rounded ${chapter.isWeak ? 'bg-weak text-black' : 'border border-weak text-weak'} hover:bg-weak hover:text-black transition-colors duration-300">
+                                ${chapter.isWeak ? 'Marked as Weak' : 'Mark as Weak'}
+                            </button>
                         </div>
                     </div>
                 `;
                 chapterList.appendChild(listItem);
             });
             
+            openChapterIndices.forEach(index => {
+                const item = chapterList.querySelector(`.chapter-item[data-index="${index}"]`);
+                if (item) {
+                    const details = item.querySelector('.chapter-details');
+                    const icon = item.querySelector('.chapter-header svg');
+                    details.classList.add('open');
+                    icon.style.transform = 'rotate(180deg)';
+                }
+            });
+
             updateProgress(subject);
             addEventListenersToChapters(subject);
         }
@@ -619,10 +464,16 @@
         function addEventListenersToChapters(subject) {
             chapterList.querySelectorAll('.chapter-item').forEach(item => {
                 const index = item.dataset.index;
-                item.querySelector('.chapter-header').addEventListener('click', (e) => {
-                    if (e.target.classList.contains('weak-btn')) return;
-                    item.querySelector('.chapter-details').classList.toggle('open');
+                const header = item.querySelector('.chapter-header');
+                const details = item.querySelector('.chapter-details');
+                const icon = header.querySelector('svg');
+
+                header.addEventListener('click', () => {
+                    const isOpen = details.classList.toggle('open');
+                    icon.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
                 });
+
+                details.addEventListener('click', (e) => e.stopPropagation());
 
                 item.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
                     checkbox.addEventListener('change', () => {
@@ -647,9 +498,12 @@
 
         // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', () => {
-            // The onAuthStateChanged listener will handle showing the initial view
             showAuthForm('login-form');
             startCountdowns();
+            navButtons.forEach(btn => {
+                btn.classList.toggle('text-primary', btn.dataset.page === 'dashboard-page');
+                btn.classList.toggle('text-on-surface-medium', btn.dataset.page !== 'dashboard-page');
+            });
         });
 
         function startCountdowns() {
@@ -666,14 +520,14 @@
                 if (masterDiff > 0) {
                     const days = Math.floor(masterDiff / (1000 * 60 * 60 * 24));
                     const hours = Math.floor((masterDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    masterCountdownEl.innerHTML = `<span>${days}</span>d <span>${hours}</span>h`;
+                    masterCountdownEl.innerHTML = `<span class="font-bold text-on-surface">${days}</span>d <span class="font-bold text-on-surface">${hours}</span>h`;
                 } else { masterCountdownEl.innerHTML = "Deadline Reached!"; }
 
                 const syllabusDiff = syllabusDeadline - now;
                  if (syllabusDiff > 0) {
                     const days = Math.floor(syllabusDiff / (1000 * 60 * 60 * 24));
                     const hours = Math.floor((syllabusDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    syllabusCountdownEl.innerHTML = `<span>${days}</span>d <span>${hours}</span>h`;
+                    syllabusCountdownEl.innerHTML = `<span class="font-bold text-on-surface">${days}</span>d <span class="font-bold text-on-surface">${hours}</span>h`;
                 } else { syllabusCountdownEl.innerHTML = "Deadline Reached!"; }
             }
             updateCountdown();
